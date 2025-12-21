@@ -9,43 +9,24 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "worker_position", indexes = {
-        @Index(name = "idx_worker_position_worker", columnList = "worker_id"),
-        @Index(name = "idx_worker_position_position", columnList = "position_id"),
-        @Index(name = "idx_worker_position_dates", columnList = "valid_from, valid_to"),
-        @Index(name = "idx_worker_position_primary", columnList = "is_primary")
-})
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class WorkerPosition {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "assignment_id")
-    private UUID assignmentId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long Id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "worker_id", nullable = false)
-    private Worker worker;
+    private Long workerId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "position_id", nullable = false)
-    private Position position;
+    private Long positionId;
 
-    @Column(name = "valid_from", nullable = false)
     private LocalDate validFrom;
 
-    @Column(name = "valid_to")
     private LocalDate validTo;
 
-    @Column(name = "fraction", nullable = false, precision = 3, scale = 2)
     private BigDecimal fraction;
 
-    @Column(name = "is_primary", nullable = false)
-    @Builder.Default
     private Boolean isPrimary = false;
 
     // Helper methods
