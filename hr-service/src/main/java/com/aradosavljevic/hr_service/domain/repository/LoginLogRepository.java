@@ -2,6 +2,8 @@ package com.aradosavljevic.hr_service.domain.repository;
 
 
 import com.aradosavljevic.hr_service.domain.entity.LoginLog;
+import com.aradosavljevic.hr_service.domain.entity.Worker;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,19 +17,23 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface LoginLogRepository extends JpaRepository<LoginLog, UUID> {
+public interface LoginLogRepository extends JpaRepository<LoginLog, Long> {
 
-    List<LoginLog> findByUserUserId(UUID userId);
+    List<LoginLog> findByUserUserId(Long userId);
 
     Page<LoginLog> findByUserUserIdOrderByLoginTimeDesc(UUID userId, Pageable pageable);
 
-    @Query("SELECT ll FROM LoginLog ll WHERE ll.user.userId = :userId AND ll.logoutTime IS NULL")
-    Optional<LoginLog> findActiveSessionByUserId(@Param("userId") UUID userId);
+    @Query("SELECT ll FROM LoginLog ll WHERE ll.userId = :userId AND ll.logoutTime IS NULL")
+    Optional<LoginLog> findActiveSessionByUserId(@Param("userId") Long userId);
 
     @Query("SELECT ll FROM LoginLog ll WHERE ll.loginTime BETWEEN :startTime AND :endTime")
     List<LoginLog> findByLoginTimeBetween(@Param("startTime") LocalDateTime startTime,
                                           @Param("endTime") LocalDateTime endTime);
 
-    @Query("SELECT COUNT(ll) FROM LoginLog ll WHERE ll.user.userId = :userId AND ll.status = 'LOGIN'")
+    @Query("SELECT COUNT(ll) FROM LoginLog ll WHERE ll.userId = :userId AND ll.status = 'LOGIN'")
     long countSuccessfulLoginsByUserId(@Param("userId") UUID userId);
+
+
+    @NotNull
+    Page<LoginLog> findAll(@NotNull Pageable pageable);
 }

@@ -5,6 +5,7 @@ package com.aradosavljevic.hr_service.domain.repository;
 import com.aradosavljevic.hr_service.domain.entity.Worker;
 import com.aradosavljevic.hr_service.domain.enums.EmploymentStatus;
 import com.aradosavljevic.hr_service.domain.enums.EmploymentType;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,15 +19,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface WorkerRepository extends JpaRepository<Worker, UUID> {
+public interface WorkerRepository extends JpaRepository<Worker,Long> {
 
     Optional<Worker> findByEmail(String email);
 
     Optional<Worker> findByPersonalId(String personalId);
-
-    boolean existsByEmail(String email);
-
-    boolean existsByPersonalId(String personalId);
 
     List<Worker> findByEmploymentStatus(EmploymentStatus status);
 
@@ -47,9 +44,10 @@ public interface WorkerRepository extends JpaRepository<Worker, UUID> {
     List<Worker> findByHireDateBetween(@Param("startDate") LocalDate startDate,
                                        @Param("endDate") LocalDate endDate);
 
-    @Query("SELECT w FROM Worker w LEFT JOIN FETCH w.positions WHERE w.workerId = :workerId")
-    Optional<Worker> findByIdWithPositions(@Param("workerId") UUID workerId);
 
     @Query("SELECT COUNT(w) FROM Worker w WHERE w.employmentStatus = :status")
     long countByStatus(@Param("status") EmploymentStatus status);
+
+    @NotNull
+    Page<Worker> findAll(@NotNull Pageable pageable);
 }
