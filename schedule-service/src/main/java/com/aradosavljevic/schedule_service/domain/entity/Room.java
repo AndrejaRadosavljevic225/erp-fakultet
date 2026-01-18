@@ -1,24 +1,36 @@
 package com.aradosavljevic.schedule_service.domain.entity;
 
 import jakarta.persistence.*;
+import rs.raf.sk.api.Prostorija;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 @Entity
-public class Room {
+public class Room extends Prostorija {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-//    TODO: Dodatni podaci
     private Long capacity;
 
 
     private Integer computerCount;
     private boolean bookable;
 
+
+    public Room(String naziv, Map<String, Object> atributi) {
+        super(naziv, atributi);
+    }
+
+    public Room(String naziv) {
+        super(naziv);
+    }
+
+    public Room() {
+        super("Room");
+    }
 
 
 
