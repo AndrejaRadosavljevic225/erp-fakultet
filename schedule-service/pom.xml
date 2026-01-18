@@ -50,7 +50,7 @@
 		<dependency>
 			<groupId>com.aradosavljevic</groupId>
 			<artifactId>API</artifactId>
-			<version>4.0.0</version>
+			<version>0.0.1-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 

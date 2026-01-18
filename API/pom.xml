@@ -6,9 +6,13 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>4.0.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.aradosavljevic</groupId>
     <artifactId>API</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>war</packaging>
+    <name>API</name>
 
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
