@@ -1,6 +1,7 @@
 package com.aradosavljevic.schedule_service.domain.repository;
 
 import com.aradosavljevic.schedule_service.domain.entity.Reservation;
+import com.aradosavljevic.schedule_service.domain.entity.Schedule;
 import com.aradosavljevic.schedule_service.domain.enums.BookingStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,18 +27,5 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
 
     Page<Reservation> findReservationByStatus(BookingStatus status, Pageable pageable);
 
-    @Override
-    public Reservation create() {
-        return new RasporedPredavanja();
-    }
 
-    @Override
-    public Reservation create(List<Prostorija> prostorije, List<Termin> termini) {
-        return new RasporedPredavanja(prostorije,termini);
-    }
-
-    @Override
-    public Reservation create(List<Prostorija> prostorije, List<Termin> termini, LocalDate datumOd, LocalDate datumDo) {
-        return new RasporedPredavanja(prostorije,termini,datumOd,datumDo);
-    }
 }
