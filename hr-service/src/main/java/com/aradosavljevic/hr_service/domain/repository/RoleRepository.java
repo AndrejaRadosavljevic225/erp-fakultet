@@ -19,7 +19,7 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
 
     Optional<Role> findByCode(String code);
 
-    Optional<Role> findByRoleName(String roleName);
+    Optional<Role> findByName(String name);
 
     List<Role> findByIsActive(Boolean isActive);
 

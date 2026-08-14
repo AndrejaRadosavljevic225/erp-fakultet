@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface PositionRepository extends JpaRepository<Position, UUID> {
+public interface PositionRepository extends JpaRepository<Position, Long> {
 
     List<Position> findByIsVacant(Boolean isVacant);
 

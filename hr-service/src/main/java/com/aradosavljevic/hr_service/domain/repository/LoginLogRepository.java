@@ -19,9 +19,9 @@ import java.util.UUID;
 @Repository
 public interface LoginLogRepository extends JpaRepository<LoginLog, Long> {
 
-    List<LoginLog> findByUserUserId(Long userId);
+    List<LoginLog> findByUserId(Long userId);
 
-    Page<LoginLog> findByUserUserIdOrderByLoginTimeDesc(UUID userId, Pageable pageable);
+    Page<LoginLog> findByUserIdOrderByLoginTimeDesc(Long userId, Pageable pageable);
 
     @Query("SELECT ll FROM LoginLog ll WHERE ll.userId = :userId AND ll.logoutTime IS NULL")
     Optional<LoginLog> findActiveSessionByUserId(@Param("userId") Long userId);
@@ -31,7 +31,7 @@ public interface LoginLogRepository extends JpaRepository<LoginLog, Long> {
                                           @Param("endTime") LocalDateTime endTime);
 
     @Query("SELECT COUNT(ll) FROM LoginLog ll WHERE ll.userId = :userId AND ll.status = 'LOGIN'")
-    long countSuccessfulLoginsByUserId(@Param("userId") UUID userId);
+    long countSuccessfulLoginsByUserId(@Param("userId") Long userId);
 
 
     @NotNull
