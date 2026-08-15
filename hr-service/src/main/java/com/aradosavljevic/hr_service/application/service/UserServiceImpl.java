@@ -28,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final AuditService auditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -58,6 +59,7 @@ public class UserServiceImpl implements UserService {
         user.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
         user.setCreatedAt(LocalDateTime.now());
         UserAccount saved = userAccountRepository.save(user);
+        auditService.log("User", saved.getId(), "CREATE", "username=" + saved.getUsername());
         return userMapper.toDTO(saved, roleName(saved.getRoleId()));
     }
 
@@ -72,6 +74,7 @@ public class UserServiceImpl implements UserService {
         if (request.getIsActive() != null) user.setIsActive(request.getIsActive());
 
         UserAccount saved = userAccountRepository.save(user);
+        auditService.log("User", saved.getId(), "UPDATE", null);
         return userMapper.toDTO(saved, roleName(saved.getRoleId()));
     }
 
@@ -82,6 +85,7 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("User", "id", id);
         }
         userAccountRepository.deleteById(id);
+        auditService.log("User", id, "DELETE", null);
     }
 
     private String roleName(Long roleId) {

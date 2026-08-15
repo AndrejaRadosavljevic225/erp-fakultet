@@ -20,6 +20,7 @@ public class PositionServiceImpl implements PositionService {
 
     private final PositionRepository positionRepository;
     private final PositionMapper positionMapper;
+    private final AuditService auditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -43,7 +44,9 @@ public class PositionServiceImpl implements PositionService {
         position.setSalaryGrade(request.getSalaryGrade());
         position.setBaseSalary(request.getBaseSalary());
         position.setIsVacant(request.getIsVacant() != null ? request.getIsVacant() : true);
-        return positionMapper.toDTO(positionRepository.save(position));
+        Position saved = positionRepository.save(position);
+        auditService.log("Position", saved.getId(), "CREATE", "title=" + saved.getTitle());
+        return positionMapper.toDTO(saved);
     }
 
     @Override
@@ -57,7 +60,9 @@ public class PositionServiceImpl implements PositionService {
         if (request.getBaseSalary() != null) position.setBaseSalary(request.getBaseSalary());
         if (request.getIsVacant() != null) position.setIsVacant(request.getIsVacant());
 
-        return positionMapper.toDTO(positionRepository.save(position));
+        Position saved = positionRepository.save(position);
+        auditService.log("Position", saved.getId(), "UPDATE", null);
+        return positionMapper.toDTO(saved);
     }
 
     @Override
@@ -67,5 +72,6 @@ public class PositionServiceImpl implements PositionService {
             throw new ResourceNotFoundException("Position", "id", id);
         }
         positionRepository.deleteById(id);
+        auditService.log("Position", id, "DELETE", null);
     }
 }

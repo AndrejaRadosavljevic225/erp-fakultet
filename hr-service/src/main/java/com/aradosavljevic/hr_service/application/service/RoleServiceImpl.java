@@ -23,6 +23,7 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
+    private final AuditService auditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -50,7 +51,9 @@ public class RoleServiceImpl implements RoleService {
         role.setDescription(request.getDescription());
         role.setIsActive(true);
         role.setCreatedAt(LocalDateTime.now());
-        return roleMapper.toDTO(roleRepository.save(role));
+        Role saved = roleRepository.save(role);
+        auditService.log("Role", saved.getId(), "CREATE", "code=" + saved.getCode());
+        return roleMapper.toDTO(saved);
     }
 
     @Override
@@ -63,7 +66,9 @@ public class RoleServiceImpl implements RoleService {
         if (request.getDescription() != null) role.setDescription(request.getDescription());
         if (request.getIsActive() != null) role.setIsActive(request.getIsActive());
 
-        return roleMapper.toDTO(roleRepository.save(role));
+        Role saved = roleRepository.save(role);
+        auditService.log("Role", saved.getId(), "UPDATE", null);
+        return roleMapper.toDTO(saved);
     }
 
     @Override
@@ -73,5 +78,6 @@ public class RoleServiceImpl implements RoleService {
             throw new ResourceNotFoundException("Role", "id", id);
         }
         roleRepository.deleteById(id);
+        auditService.log("Role", id, "DELETE", null);
     }
 }

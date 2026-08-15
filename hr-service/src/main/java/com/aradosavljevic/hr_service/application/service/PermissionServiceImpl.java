@@ -20,6 +20,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     private final PermissionRepository permissionRepository;
     private final PermissionMapper permissionMapper;
+    private final AuditService auditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -45,7 +46,9 @@ public class PermissionServiceImpl implements PermissionService {
         permission.setCode(request.getCode());
         permission.setName(request.getName());
         permission.setModule(request.getModule());
-        return permissionMapper.toDTO(permissionRepository.save(permission));
+        Permission saved = permissionRepository.save(permission);
+        auditService.log("Permission", saved.getId(), "CREATE", "code=" + saved.getCode());
+        return permissionMapper.toDTO(saved);
     }
 
     @Override
@@ -55,5 +58,6 @@ public class PermissionServiceImpl implements PermissionService {
             throw new ResourceNotFoundException("Permission", "id", id);
         }
         permissionRepository.deleteById(id);
+        auditService.log("Permission", id, "DELETE", null);
     }
 }

@@ -34,6 +34,7 @@ public class WorkerServiceImpl implements WorkerService {
     private final WorkerPositionRepository workerPositionRepository;
     private final PositionRepository positionRepository;
     private final WorkerMapper workerMapper;
+    private final AuditService auditService;
 
     @Override
     @Transactional(readOnly = true)
@@ -91,7 +92,9 @@ public class WorkerServiceImpl implements WorkerService {
                 ? request.getEmploymentStatus() : EmploymentStatus.ACTIVE);
         worker.setEmploymentType(request.getEmploymentType());
 
-        return workerMapper.toDTO(workerRepository.save(worker));
+        Worker saved = workerRepository.save(worker);
+        auditService.log("Worker", saved.getId(), "CREATE", "email=" + saved.getEmail());
+        return workerMapper.toDTO(saved);
     }
 
     @Override
@@ -110,7 +113,9 @@ public class WorkerServiceImpl implements WorkerService {
         if (request.getEmploymentStatus() != null) worker.setEmploymentStatus(request.getEmploymentStatus());
         if (request.getEmploymentType() != null) worker.setEmploymentType(request.getEmploymentType());
 
-        return workerMapper.toDTO(workerRepository.save(worker));
+        Worker saved = workerRepository.save(worker);
+        auditService.log("Worker", saved.getId(), "UPDATE", "status=" + saved.getEmploymentStatus());
+        return workerMapper.toDTO(saved);
     }
 
     @Override
@@ -122,5 +127,6 @@ public class WorkerServiceImpl implements WorkerService {
         workerPositionRepository.findByWorkerId(id)
                 .forEach(workerPositionRepository::delete);
         workerRepository.deleteById(id);
+        auditService.log("Worker", id, "DELETE", null);
     }
 }
