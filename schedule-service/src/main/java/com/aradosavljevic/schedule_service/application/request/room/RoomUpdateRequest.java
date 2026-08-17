@@ -1,14 +1,9 @@
 package com.aradosavljevic.schedule_service.application.request.room;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class RoomCreateRequest {
-
-    @NotBlank(message = "Oznaka prostorije (code) je obavezna")
-    private String code;
-
+public class RoomUpdateRequest {
     private String name;
     private String building;
     private Integer floor;
@@ -17,4 +12,5 @@ public class RoomCreateRequest {
     private String roomType;
     private Integer computerCount;
     private Boolean bookable;
+    private Boolean active;
 }
