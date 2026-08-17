@@ -4,22 +4,23 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
+/**
+ * teaching_norm iz modela — KVOTA casova po zvanju (roli) za skolsku godinu.
+ */
 @Entity
 @Getter
 @Setter
-public class SchoolYear {
+public class TeachingNorm {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String code;
+    private Long roleId;
 
-    private LocalDate startDate;
+    private Long schoolYearId;
 
-    private LocalDate endDate;
+    private Integer requiredHours;
 
     private String description;
 }
