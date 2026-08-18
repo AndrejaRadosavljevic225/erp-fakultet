@@ -5,6 +5,7 @@ import com.aradosavljevic.erp_common.dto.PageResponse;
 import com.aradosavljevic.hr_service.application.dto.AuditLogDTO;
 import com.aradosavljevic.hr_service.application.service.AuditService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/audit-logs")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HR')")
 public class AuditLogController {
 
     private final AuditService auditService;

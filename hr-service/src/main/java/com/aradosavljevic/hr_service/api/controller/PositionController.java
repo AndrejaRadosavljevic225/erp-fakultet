@@ -10,21 +10,25 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/positions")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HR')")
 public class PositionController {
 
     private final PositionService positionService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<PageResponse<PositionDTO>> getAll(@PageableDefault(size = 20) Pageable pageable) {
         return ApiResponse.success(positionService.getAll(pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<PositionDTO> getById(@PathVariable Long id) {
         return ApiResponse.success(positionService.getById(id));
     }
@@ -41,6 +45,7 @@ public class PositionController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         positionService.delete(id);
         return ApiResponse.success("Pozicija je obrisana", null);

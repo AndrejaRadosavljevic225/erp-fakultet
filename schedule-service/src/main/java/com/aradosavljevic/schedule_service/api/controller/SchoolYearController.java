@@ -7,6 +7,7 @@ import com.aradosavljevic.schedule_service.application.request.teaching.SchoolYe
 import com.aradosavljevic.schedule_service.application.service.SchoolYearService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +15,19 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/school-years")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HR')")
 public class SchoolYearController {
 
     private final SchoolYearService schoolYearService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<PageResponse<SchoolYearDTO>> getAll(@PageableDefault(size = 20) Pageable pageable) {
         return ApiResponse.success(schoolYearService.getAll(pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<SchoolYearDTO> getById(@PathVariable Long id) {
         return ApiResponse.success(schoolYearService.getById(id));
     }

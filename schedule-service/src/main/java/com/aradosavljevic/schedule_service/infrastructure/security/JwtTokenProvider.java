@@ -41,6 +41,16 @@ public class JwtTokenProvider {
         return (value instanceof Number n) ? n.longValue() : null;
     }
 
+    public String getRoleCode(String token) {
+        Object value = parse(token).get("role");
+        return value != null ? value.toString() : null;
+    }
+
+    public Long getWorkerId(String token) {
+        Object value = parse(token).get("workerId");
+        return (value instanceof Number n) ? n.longValue() : null;
+    }
+
     private Claims parse(String token) {
         return Jwts.parser()
                 .verifyWith(key)

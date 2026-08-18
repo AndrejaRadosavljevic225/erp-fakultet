@@ -19,7 +19,9 @@ import com.aradosavljevic.schedule_service.domain.repository.BookingRepository;
 import com.aradosavljevic.schedule_service.domain.repository.SchoolYearRepository;
 import com.aradosavljevic.schedule_service.domain.repository.SchoolYearWorkerRepository;
 import com.aradosavljevic.schedule_service.domain.repository.TeachingNormRepository;
+import com.aradosavljevic.schedule_service.infrastructure.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,6 +124,13 @@ public class TeachingServiceImpl implements TeachingService {
     @Override
     @Transactional(readOnly = true)
     public TeachingReportDTO report(Long workerId, Long schoolYearId) {
+        // Profesor moze da vidi samo svoj fond casova; ADMIN/HR sve
+        if (!SecurityUtils.isPrivileged()) {
+            Long me = SecurityUtils.currentWorkerId();
+            if (me == null || !me.equals(workerId)) {
+                throw new AccessDeniedException("Mozete videti samo svoj fond casova");
+            }
+        }
         SchoolYearWorker assignment = schoolYearWorkerRepository
                 .findByWorkerIdAndSchoolYearId(workerId, schoolYearId)
                 .orElseThrow(() -> new ResourceNotFoundException(

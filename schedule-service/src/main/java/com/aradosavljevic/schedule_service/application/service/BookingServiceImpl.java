@@ -15,7 +15,9 @@ import com.aradosavljevic.schedule_service.domain.entity.Room;
 import com.aradosavljevic.schedule_service.domain.enums.BookingStatus;
 import com.aradosavljevic.schedule_service.domain.repository.BookingRepository;
 import com.aradosavljevic.schedule_service.domain.repository.RoomRepository;
+import com.aradosavljevic.schedule_service.infrastructure.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,6 +91,14 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingDTO create(BookingCreateRequest request) {
+        // Profesor (nije ADMIN/HR) moze da podnese samo svoju rezervaciju
+        if (!SecurityUtils.isPrivileged()) {
+            Long me = SecurityUtils.currentWorkerId();
+            if (me == null) {
+                throw new BusinessException("Vas nalog nema povezan workerId — ne mozete podneti rezervaciju");
+            }
+            request.setRequesterWorkerId(me);
+        }
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new ResourceNotFoundException("Room", "id", request.getRoomId()));
         if (!Boolean.TRUE.equals(room.getBookable()) || !Boolean.TRUE.equals(room.getActive())) {
@@ -121,6 +131,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingDTO update(Long id, BookingUpdateRequest request) {
         Booking b = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", id));
+        requireOwnershipOrPrivileged(b.getRequesterWorkerId());
 
         LocalDateTime newStart = request.getStartDateTime() != null ? request.getStartDateTime() : b.getStartDateTime();
         LocalDateTime newEnd = request.getEndDateTime() != null ? request.getEndDateTime() : b.getEndDateTime();
@@ -168,11 +179,21 @@ public class BookingServiceImpl implements BookingService {
     public BookingDTO cancel(Long id) {
         Booking b = bookingRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", id));
+        requireOwnershipOrPrivileged(b.getRequesterWorkerId());
         if (b.getStatus() == BookingStatus.CANCELLED || b.getStatus() == BookingStatus.REJECTED) {
             throw new BusinessException("Rezervacija je vec zatvorena (" + b.getStatus() + ")");
         }
         b.setStatus(BookingStatus.CANCELLED);
         return toDTO(bookingRepository.save(b));
+    }
+
+    /** Profesor sme samo svoje; ADMIN/HR sme sve. */
+    private void requireOwnershipOrPrivileged(Long ownerWorkerId) {
+        if (SecurityUtils.isPrivileged()) return;
+        Long me = SecurityUtils.currentWorkerId();
+        if (me == null || !me.equals(ownerWorkerId)) {
+            throw new AccessDeniedException("Mozete raditi samo sa svojim rezervacijama");
+        }
     }
 
     private Booking requireRequested(Long id) {

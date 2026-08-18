@@ -6,8 +6,10 @@ import com.aradosavljevic.hr_service.application.request.auth.ChangePasswordRequ
 import com.aradosavljevic.hr_service.application.request.auth.LoginRequest;
 import com.aradosavljevic.hr_service.application.request.auth.RegisterRequest;
 import com.aradosavljevic.hr_service.domain.entity.LoginLog;
+import com.aradosavljevic.hr_service.domain.entity.Role;
 import com.aradosavljevic.hr_service.domain.entity.UserAccount;
 import com.aradosavljevic.hr_service.domain.repository.LoginLogRepository;
+import com.aradosavljevic.hr_service.domain.repository.RoleRepository;
 import com.aradosavljevic.hr_service.domain.repository.UserAccountRepository;
 import com.aradosavljevic.hr_service.infrastructure.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final LoginLogRepository loginLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final RoleRepository roleRepository;
 
     @Override
     @Transactional
@@ -41,7 +44,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setCreatedAt(LocalDateTime.now());
         UserAccount saved = userAccountRepository.save(user);
 
-        String token = tokenProvider.generateToken(saved.getUsername(), saved.getId(), saved.getRoleId());
+        String token = tokenProvider.generateToken(saved.getUsername(), saved.getId(), saved.getRoleId(),
+                roleCode(saved.getRoleId()), saved.getWorkerId());
         return AuthResponse.builder()
                 .token(token)
                 .userId(saved.getId())
@@ -72,7 +76,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         log.setStatus("LOGIN");
         loginLogRepository.save(log);
 
-        String token = tokenProvider.generateToken(user.getUsername(), user.getId(), user.getRoleId());
+        String token = tokenProvider.generateToken(user.getUsername(), user.getId(), user.getRoleId(),
+                roleCode(user.getRoleId()), user.getWorkerId());
         return AuthResponse.builder()
                 .token(token)
                 .userId(user.getId())
@@ -92,5 +97,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userAccountRepository.save(user);
+    }
+
+    private String roleCode(Long roleId) {
+        if (roleId == null) return null;
+        return roleRepository.findById(roleId).map(Role::getCode).orElse(null);
     }
 }

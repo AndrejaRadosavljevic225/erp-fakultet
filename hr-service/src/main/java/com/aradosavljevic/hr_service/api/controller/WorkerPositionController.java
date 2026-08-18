@@ -7,6 +7,7 @@ import com.aradosavljevic.hr_service.application.request.assignment.WorkerPositi
 import com.aradosavljevic.hr_service.application.service.WorkerPositionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,11 +15,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/worker-positions")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HR')")
 public class WorkerPositionController {
 
     private final WorkerPositionService workerPositionService;
 
     @GetMapping("/worker/{workerId}")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<List<WorkerPositionDTO>> getByWorker(@PathVariable Long workerId) {
         return ApiResponse.success(workerPositionService.getByWorker(workerId));
     }

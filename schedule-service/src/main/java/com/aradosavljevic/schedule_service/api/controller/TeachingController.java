@@ -10,6 +10,7 @@ import com.aradosavljevic.schedule_service.application.request.teaching.Teaching
 import com.aradosavljevic.schedule_service.application.service.TeachingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/teaching")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HR')")
 public class TeachingController {
 
     private final TeachingService teachingService;
@@ -62,6 +64,7 @@ public class TeachingController {
     // --- Fond casova (izvestaj) ---
 
     @GetMapping("/report")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<TeachingReportDTO> report(@RequestParam Long workerId,
                                                  @RequestParam Long schoolYearId) {
         return ApiResponse.success(teachingService.report(workerId, schoolYearId));

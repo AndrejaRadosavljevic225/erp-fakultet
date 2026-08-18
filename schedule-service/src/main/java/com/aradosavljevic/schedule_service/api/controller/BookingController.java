@@ -11,6 +11,7 @@ import com.aradosavljevic.schedule_service.application.service.BookingService;
 import com.aradosavljevic.schedule_service.domain.enums.BookingStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
 public class BookingController {
 
     private final BookingService bookingService;
@@ -73,12 +75,14 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public ApiResponse<BookingDTO> approve(@PathVariable Long id,
                                            @RequestParam(required = false) Long approvedBy) {
         return ApiResponse.success("Rezervacija je odobrena", bookingService.approve(id, approvedBy));
     }
 
     @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public ApiResponse<BookingDTO> reject(@PathVariable Long id,
                                           @RequestParam(required = false) Long approvedBy) {
         return ApiResponse.success("Rezervacija je odbijena", bookingService.reject(id, approvedBy));

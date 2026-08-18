@@ -8,6 +8,7 @@ import com.aradosavljevic.schedule_service.application.request.room.RoomUpdateRe
 import com.aradosavljevic.schedule_service.application.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -15,16 +16,19 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/rooms")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN','HR')")
 public class RoomController {
 
     private final RoomService roomService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<PageResponse<RoomDTO>> getAll(@PageableDefault(size = 20) Pageable pageable) {
         return ApiResponse.success(roomService.getAll(pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','HR','PROFESOR')")
     public ApiResponse<RoomDTO> getById(@PathVariable Long id) {
         return ApiResponse.success(roomService.getById(id));
     }
@@ -40,6 +44,7 @@ public class RoomController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         roomService.delete(id);
         return ApiResponse.success("Prostorija je obrisana", null);

@@ -7,6 +7,7 @@ import com.aradosavljevic.hr_service.application.request.permission.PermissionCr
 import com.aradosavljevic.hr_service.application.service.PermissionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +15,19 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/permissions")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class PermissionController {
 
     private final PermissionService permissionService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public ApiResponse<PageResponse<PermissionDTO>> getAll(@PageableDefault(size = 20) Pageable pageable) {
         return ApiResponse.success(permissionService.getAll(pageable));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','HR')")
     public ApiResponse<PermissionDTO> getById(@PathVariable Long id) {
         return ApiResponse.success(permissionService.getById(id));
     }
