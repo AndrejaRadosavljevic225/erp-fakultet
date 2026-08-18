@@ -13,6 +13,7 @@ import com.aradosavljevic.hr_service.application.request.worker.WorkerCreateRequ
 import com.aradosavljevic.hr_service.application.request.worker.WorkerUpdateRequest;
 import com.aradosavljevic.hr_service.domain.entity.Position;
 import com.aradosavljevic.hr_service.domain.entity.Worker;
+import com.aradosavljevic.hr_service.domain.entity.WorkerPosition;
 import com.aradosavljevic.hr_service.domain.enums.EmploymentStatus;
 import com.aradosavljevic.hr_service.domain.repository.PositionRepository;
 import com.aradosavljevic.hr_service.domain.repository.WorkerPositionRepository;
@@ -25,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -59,13 +62,11 @@ public class WorkerServiceImpl implements WorkerService {
         Worker worker = workerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Worker", "id", id));
 
-        List<WorkerPositionDTO> positions = workerPositionRepository.findByWorkerId(id).stream()
-                .map(wp -> {
-                    String title = positionRepository.findById(wp.getPositionId())
-                            .map(Position::getTitle)
-                            .orElse(null);
-                    return workerMapper.toPositionDTO(wp, title);
-                })
+        List<WorkerPosition> workerPositions = workerPositionRepository.findByWorkerId(id);
+        Map<Long, String> titles = positionTitles(workerPositions.stream()
+                .map(WorkerPosition::getPositionId).toList());
+        List<WorkerPositionDTO> positions = workerPositions.stream()
+                .map(wp -> workerMapper.toPositionDTO(wp, titles.get(wp.getPositionId())))
                 .toList();
 
         return workerMapper.toDetailDTO(worker, positions);
@@ -128,5 +129,11 @@ public class WorkerServiceImpl implements WorkerService {
                 .forEach(workerPositionRepository::delete);
         workerRepository.deleteById(id);
         auditService.log("Worker", id, "DELETE", null);
+    }
+
+    private Map<Long, String> positionTitles(List<Long> positionIds) {
+        return positionRepository.findAllById(
+                        positionIds.stream().filter(pid -> pid != null).distinct().toList()).stream()
+                .collect(Collectors.toMap(Position::getId, Position::getTitle));
     }
 }

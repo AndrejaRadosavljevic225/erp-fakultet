@@ -12,7 +12,11 @@ public final class PageMapper {
     }
 
     public static <E, D> PageResponse<D> toPageResponse(Page<E> page, Function<E, D> mapper) {
-        List<D> content = page.getContent().stream().map(mapper).toList();
+        return toPageResponse(page, page.getContent().stream().map(mapper).toList());
+    }
+
+    /** Varijanta sa vec pripremljenim sadrzajem (za batch mapiranje, izbegavanje N+1). */
+    public static <D> PageResponse<D> toPageResponse(Page<?> page, List<D> content) {
         return PageResponse.<D>builder()
                 .content(content)
                 .pageNumber(page.getNumber())

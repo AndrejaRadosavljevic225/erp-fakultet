@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,8 +34,12 @@ public class WorkerPositionServiceImpl implements WorkerPositionService {
         if (!workerRepository.existsById(workerId)) {
             throw new ResourceNotFoundException("Worker", "id", workerId);
         }
-        return workerPositionRepository.findByWorkerId(workerId).stream()
-                .map(wp -> workerMapper.toPositionDTO(wp, positionTitle(wp.getPositionId())))
+        List<WorkerPosition> wps = workerPositionRepository.findByWorkerId(workerId);
+        Map<Long, String> titles = positionRepository.findAllById(
+                        wps.stream().map(WorkerPosition::getPositionId).filter(pid -> pid != null).distinct().toList())
+                .stream().collect(Collectors.toMap(Position::getId, Position::getTitle));
+        return wps.stream()
+                .map(wp -> workerMapper.toPositionDTO(wp, titles.get(wp.getPositionId())))
                 .toList();
     }
 

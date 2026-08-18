@@ -35,9 +35,12 @@ public class RolePermissionServiceImpl implements RolePermissionService {
         if (!roleRepository.existsById(roleId)) {
             throw new ResourceNotFoundException("Role", "id", roleId);
         }
-        return rolePermissionRepository.findByRoleId(roleId).stream()
-                .map(rp -> permissionRepository.findById(rp.getPermissionId()).orElse(null))
-                .filter(java.util.Objects::nonNull)
+        List<Long> permissionIds = rolePermissionRepository.findByRoleId(roleId).stream()
+                .map(RolePermission::getPermissionId)
+                .filter(pid -> pid != null)
+                .distinct()
+                .toList();
+        return permissionRepository.findAllById(permissionIds).stream()
                 .map(permissionMapper::toDTO)
                 .toList();
     }

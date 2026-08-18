@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,27 +48,28 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BookingDTO> getByRoom(Long roomId, Pageable pageable) {
-        return PageMapper.toPageResponse(bookingRepository.findByRoomId(roomId, pageable), this::toDTO);
+        var page = bookingRepository.findByRoomId(roomId, pageable);
+        return PageMapper.toPageResponse(page, toDTOs(page.getContent()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BookingDTO> getByWorker(Long workerId, Pageable pageable) {
-        return PageMapper.toPageResponse(bookingRepository.findByRequesterWorkerId(workerId, pageable), this::toDTO);
+        var page = bookingRepository.findByRequesterWorkerId(workerId, pageable);
+        return PageMapper.toPageResponse(page, toDTOs(page.getContent()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<BookingDTO> getByStatus(BookingStatus status, Pageable pageable) {
-        return PageMapper.toPageResponse(bookingRepository.findByStatus(status, pageable), this::toDTO);
+        var page = bookingRepository.findByStatus(status, pageable);
+        return PageMapper.toPageResponse(page, toDTOs(page.getContent()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BookingDTO> occupancy(Long roomId, LocalDateTime from, LocalDateTime to) {
-        return bookingRepository.findByRoomIdAndStartDateTimeBetween(roomId, from, to).stream()
-                .map(this::toDTO)
-                .toList();
+        return toDTOs(bookingRepository.findByRoomIdAndStartDateTimeBetween(roomId, from, to));
     }
 
     @Override
@@ -79,7 +82,7 @@ public class BookingServiceImpl implements BookingService {
                 .startDateTime(request.getStartDateTime())
                 .endDateTime(request.getEndDateTime())
                 .available(conflicts.isEmpty())
-                .conflicts(conflicts.stream().map(this::toDTO).toList())
+                .conflicts(toDTOs(conflicts))
                 .build();
     }
 
@@ -184,5 +187,15 @@ public class BookingServiceImpl implements BookingService {
     private BookingDTO toDTO(Booking b) {
         String roomName = roomRepository.findById(b.getRoomId()).map(Room::getName).orElse(null);
         return bookingMapper.toDTO(b, roomName);
+    }
+
+    /** Batch mapiranje: jedan upit za sva imena prostorija umesto po jedan za svaki booking. */
+    private List<BookingDTO> toDTOs(List<Booking> bookings) {
+        Map<Long, String> roomNames = roomRepository.findAllById(
+                        bookings.stream().map(Booking::getRoomId).filter(rid -> rid != null).distinct().toList())
+                .stream().collect(Collectors.toMap(Room::getId, Room::getName));
+        return bookings.stream()
+                .map(b -> bookingMapper.toDTO(b, roomNames.get(b.getRoomId())))
+                .toList();
     }
 }
