@@ -13,6 +13,11 @@ import java.time.LocalDateTime;
  * room_scheduled iz modela — rezervacija/termin u prostoriji.
  */
 @Entity
+@Table(name = "booking", indexes = {
+        @Index(name = "idx_booking_room_time", columnList = "room_id, start_date_time, end_date_time"),
+        @Index(name = "idx_booking_worker", columnList = "requester_worker_id"),
+        @Index(name = "idx_booking_year", columnList = "school_year_id")
+})
 @Getter
 @Setter
 public class Booking {

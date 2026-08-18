@@ -8,6 +8,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "user_account", indexes = {
+        @Index(name = "idx_user_username", columnList = "username", unique = true),
+        @Index(name = "idx_user_worker_id", columnList = "worker_id")
+})
 @Getter
 @Setter
 public class UserAccount {

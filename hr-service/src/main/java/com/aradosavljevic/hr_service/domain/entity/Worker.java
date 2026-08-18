@@ -15,6 +15,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
+@Table(name = "worker", indexes = {
+        @Index(name = "idx_worker_email", columnList = "email", unique = true),
+        @Index(name = "idx_worker_personal_id", columnList = "personal_id", unique = true),
+        @Index(name = "idx_worker_status", columnList = "employment_status")
+})
 @Getter
 @Setter
 public class Worker {
@@ -37,8 +42,10 @@ public class Worker {
 
     private LocalDate terminationDate = null;
 
+    @Enumerated(EnumType.STRING)
     private EmploymentStatus employmentStatus;
 
+    @Enumerated(EnumType.STRING)
     private EmploymentType employmentType;
 
     public String getFullName() {

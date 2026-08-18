@@ -9,6 +9,9 @@ import lombok.Setter;
  * povezana sa normom (norm_id) preko koje nasledi kvotu casova.
  */
 @Entity
+@Table(name = "school_year_worker", indexes = {
+        @Index(name = "idx_syw_worker_year", columnList = "worker_id, school_year_id")
+})
 @Getter
 @Setter
 public class SchoolYearWorker {

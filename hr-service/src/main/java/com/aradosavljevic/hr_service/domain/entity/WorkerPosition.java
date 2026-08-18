@@ -9,6 +9,10 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
+@Table(name = "worker_position", indexes = {
+        @Index(name = "idx_wp_worker_id", columnList = "worker_id"),
+        @Index(name = "idx_wp_position_id", columnList = "position_id")
+})
 @Getter
 @Setter
 public class WorkerPosition {

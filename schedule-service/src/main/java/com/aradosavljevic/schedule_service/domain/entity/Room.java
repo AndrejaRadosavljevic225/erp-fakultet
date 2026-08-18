@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@Table(name = "room", indexes = {
+        @Index(name = "idx_room_code", columnList = "code", unique = true)
+})
 @Getter
 @Setter
 public class Room {
