@@ -1,0 +1,6 @@
+# Ne kopiraj u Docker build kontekst (Maven svejedno rebuild-uje)
+**/target/
+.git/
+.idea/
+**/legacy/
+*.iml

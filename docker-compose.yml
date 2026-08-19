@@ -1,10 +1,12 @@
-# ERP Fakultet - lokalna infrastruktura (baza + Kafka)
-# Servisi (hr/finance/schedule/gateway) se pokrecu lokalno preko Mavena i gadjaju localhost.
+# ERP Fakultet - Docker stack
 #
-# Pokretanje samo baze i Kafke:   docker compose up -d
-# Sa UI alatima (pgAdmin, kafka-ui):  docker compose --profile tools up -d
-# Gasenje:                         docker compose down
-# Gasenje + brisanje podataka:     docker compose down -v
+# CEO STACK odjednom (baza + Kafka + HR + Schedule + Gateway):
+#     docker compose --profile app up -d --build
+# Samo baza + Kafka (kad servise pokreces iz IntelliJ-a):
+#     docker compose up -d
+# Sa UI alatima (pgAdmin, kafka-ui):
+#     docker compose --profile tools up -d
+# Gasenje:  docker compose --profile app down      (+ -v brise i podatke)
 
 services:
   postgres:
@@ -75,6 +77,67 @@ services:
       - "8090:8080"
     depends_on:
       - kafka
+
+  # --- Aplikacioni servisi (samo uz --profile app) ---
+  hr-service:
+    build:
+      context: .
+      dockerfile: hr-service/Dockerfile
+    container_name: erp-hr-service
+    profiles: ["app"]
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_NAME: erp_hr
+      DB_USER: erp
+      DB_PASSWORD: erp
+      KAFKA_SERVERS: kafka:19092
+      JWT_SECRET: erp-fakultet-hr-service-super-tajni-kljuc-promeni-me-2026
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  schedule-service:
+    build:
+      context: .
+      dockerfile: schedule-service/Dockerfile
+    container_name: erp-schedule-service
+    profiles: ["app"]
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_NAME: erp_schedule
+      DB_USER: erp
+      DB_PASSWORD: erp
+      KAFKA_SERVERS: kafka:19092
+      JWT_SECRET: erp-fakultet-hr-service-super-tajni-kljuc-promeni-me-2026
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: erp-api-gateway
+    profiles: ["app"]
+    environment:
+      HR_URI: http://hr-service:8081
+      SCHEDULE_URI: http://schedule-service:8083
+      FINANCE_URI: http://finance-service:8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hr-service
+      - schedule-service
 
 volumes:
   postgres-data:

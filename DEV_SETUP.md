@@ -1,46 +1,59 @@
-# ERP Fakultet — lokalno okruzenje (dev)
+# ERP Fakultet — pokretanje
 
 ## Preduslovi
-- **JDK 21** (obavezno — projekat je Spring Boot 4 / Java 21). Proveri: `java -version` mora da pise 21.
-- **Maven 3.9+** (ima i `mvnw` wrapper u repo-u)
-- **Docker Desktop** (za bazu i Kafku)
+- **Docker Desktop** (za sve; opcija A)
+- Za rad iz IDE-a (opcija B): **JDK 21** + Maven 3.9+ (ima `mvnw` wrapper)
 
-> Napomena: ako `java -version` pokazuje 1.8, instaliraj JDK 21 (npr. Temurin 21) i podesi
-> `JAVA_HOME` na taj JDK, pa restartuj terminal.
+---
 
-## 1) Podigni infrastrukturu (Postgres + Kafka)
+## Opcija A — CEO STACK jednom komandom (preporuka)
+
+Podiže bazu + Kafku + sva 3 servisa u kontejnerima:
 ```bash
-docker compose up -d
+docker compose --profile app up -d --build
 ```
-Sa UI alatima (pgAdmin na :5050, kafka-ui na :8090):
+Prvi put build traje par minuta (gradi slike). Kasnije bez `--build` je brzo.
+
+Gašenje: `docker compose --profile app down`  •  + brisanje podataka: `... down -v`
+
+## Opcija B — samo baza u Dockeru, servisi iz IntelliJ-a
+
 ```bash
-docker compose --profile tools up -d
+docker compose up -d          # samo Postgres + Kafka
 ```
-Gasenje: `docker compose down`  •  Gasenje + brisanje podataka: `docker compose down -v`
-
-## 2) Servisi i portovi
-| Servis           | Port | Baza          | Swagger                          |
-|------------------|------|---------------|----------------------------------|
-| api-gateway      | 8080 | —             | —                                |
-| hr-service       | 8081 | `erp_hr`      | http://localhost:8081/swagger-ui.html |
-| finance-service  | 8082 | `erp_finance` | http://localhost:8082/swagger-ui.html |
-| schedule-service | 8083 | `erp_schedule`| http://localhost:8083/swagger-ui.html |
-
-Postgres: `localhost:5432`, korisnik `erp`, lozinka `erp`.
-Kafka (za servise na host masini): `localhost:9092`.
-
-## 3) Build i pokretanje servisa
-Prvo napravi `erp-common` (ostali zavise od njega):
+Pa iz IntelliJ-a (ili terminala) pokreni servise:
 ```bash
-mvn -q -pl erp-common -am install
-```
-Pokretanje pojedinacnog servisa (iz root foldera):
-```bash
+mvn -q -pl erp-common -am install     # jednom
 mvn -pl hr-service spring-boot:run
+mvn -pl schedule-service spring-boot:run
+mvn -pl api-gateway spring-boot:run
 ```
 
-## Napomene / TODO
-- Sema baze se za sad pravi automatski iz JPA entiteta (`ddl-auto=update`).
-  Flyway je iskljucen jer su migracije prazne — kasnije popuniti `V1__*.sql` i preci na `validate`.
-- Poslovna logika (kontroleri, servisi, security) je vecinom prazna — tek treba implementirati.
-- Rute na api-gateway-u su zakomentarisane; do implementacije gadjaj servise direktno na portovima.
+UI alati (pgAdmin :5050, kafka-ui :8090): `docker compose --profile tools up -d`
+
+---
+
+## Servisi i portovi
+
+| Servis | Port | Baza |
+|---|---|---|
+| **api-gateway** | 8080 | — (jedan ulaz za sve) |
+| hr-service | 8081 | `erp_hr` |
+| schedule-service | 8083 | `erp_schedule` |
+| finance-service | 8082 | `erp_finance` (još nije implementiran) |
+
+Postgres: `localhost:5432` (`erp`/`erp`) • Kafka: `localhost:9092`
+
+## Pristup preko gateway-a (jedan URL)
+
+- HR:       `http://localhost:8080/hr/api/...`       → hr-service
+- Schedule: `http://localhost:8080/schedule/api/...` → schedule-service
+
+**Auth:** `POST /hr/api/auth/login` → `data.token` → šalji `Authorization: Bearer <token>`.
+Difoltni nalog: `admin` / `admin123` (rola ADMIN). Role: ADMIN / HR / PROFESOR.
+
+## Konfiguracija (env varijable, dev fallback)
+
+- `SPRING_PROFILES_ACTIVE` (dev/prod), `JWT_SECRET`, `DB_HOST/DB_NAME/DB_USER/DB_PASSWORD`, `KAFKA_SERVERS`
+- Gateway rute: `HR_URI`, `SCHEDULE_URI`, `FINANCE_URI`
+- Profili: `dev` = `ddl-auto=update` + SQL log; `prod` = `ddl-auto=validate`, bez logova.
