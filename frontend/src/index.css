@@ -1,0 +1,14 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* Linkovi u karticama ne treba da budu podvuceni/plavi. */
+a {
+  color: inherit;
+}
