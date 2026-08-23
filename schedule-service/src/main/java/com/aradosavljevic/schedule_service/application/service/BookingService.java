@@ -24,6 +24,8 @@ public interface BookingService {
 
     List<BookingDTO> occupancy(Long roomId, LocalDateTime from, LocalDateTime to);
 
+    List<BookingDTO> occupancyAll(LocalDateTime from, LocalDateTime to, String building, Integer minCapacity);
+
     AvailabilityResponse checkAvailability(AvailabilityRequest request);
 
     BookingDTO create(BookingCreateRequest request);

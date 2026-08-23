@@ -35,6 +35,10 @@ public class BookingServiceImpl implements BookingService {
     private static final List<BookingStatus> ACTIVE_STATUSES =
             List.of(BookingStatus.REQUESTED, BookingStatus.ACCEPTED);
 
+    /** Statusi koji se prikazuju u kalendaru zauzetosti (odbijene i otkazane ne zauzimaju salu). */
+    private static final List<BookingStatus> OCCUPANCY_STATUSES =
+            List.of(BookingStatus.REQUESTED, BookingStatus.ACCEPTED, BookingStatus.FINISHED);
+
     private final BookingRepository bookingRepository;
     private final RoomRepository roomRepository;
     private final BookingMapper bookingMapper;
@@ -71,7 +75,24 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public List<BookingDTO> occupancy(Long roomId, LocalDateTime from, LocalDateTime to) {
-        return toDTOs(bookingRepository.findByRoomIdAndStartDateTimeBetween(roomId, from, to));
+        // preklapanje sa intervalom, ne samo pocetak u intervalu — inace termin koji je poceo
+        // pre "from" a traje u njega ne bi bio prikazan u kalendaru
+        return toDTOs(bookingRepository.findOverlapping(roomId, from, to, OCCUPANCY_STATUSES));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingDTO> occupancyAll(LocalDateTime from, LocalDateTime to, String building, Integer minCapacity) {
+        List<Long> roomIds = roomRepository.findAll().stream()
+                .filter(r -> Boolean.TRUE.equals(r.getActive()))
+                .filter(r -> building == null || building.isBlank() || building.equalsIgnoreCase(r.getBuilding()))
+                .filter(r -> minCapacity == null || (r.getCapacity() != null && r.getCapacity() >= minCapacity))
+                .map(Room::getId)
+                .toList();
+        if (roomIds.isEmpty()) {
+            return List.of();
+        }
+        return toDTOs(bookingRepository.findOverlappingInRooms(roomIds, from, to, OCCUPANCY_STATUSES));
     }
 
     @Override

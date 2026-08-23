@@ -64,6 +64,18 @@ public class BookingController {
         return ApiResponse.success(bookingService.occupancy(roomId, from, to));
     }
 
+    /**
+     * Zauzetost SVIH sala u intervalu, uz opcione filtere po zgradi i minimalnom kapacitetu (UC-SC-05).
+     */
+    @GetMapping("/occupancy")
+    public ApiResponse<List<BookingDTO>> occupancyAll(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+            @RequestParam(required = false) String building,
+            @RequestParam(required = false) Integer minCapacity) {
+        return ApiResponse.success(bookingService.occupancyAll(from, to, building, minCapacity));
+    }
+
     @PostMapping("/availability")
     public ApiResponse<AvailabilityResponse> availability(@Valid @RequestBody AvailabilityRequest request) {
         return ApiResponse.success(bookingService.checkAvailability(request));

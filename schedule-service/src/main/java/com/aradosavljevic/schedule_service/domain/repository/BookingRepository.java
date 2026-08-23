@@ -44,4 +44,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                   @Param("start") LocalDateTime start,
                                   @Param("end") LocalDateTime end,
                                   @Param("statuses") List<BookingStatus> statuses);
+
+    /**
+     * Sve rezervacije u zadatim prostorijama koje se preklapaju sa intervalom [start, end).
+     * Koristi se za kalendar zauzetosti vise sala odjednom (UC-SC-05).
+     */
+    @Query("SELECT b FROM Booking b " +
+            "WHERE b.roomId IN :roomIds AND b.status IN :statuses " +
+            "AND b.startDateTime < :end AND b.endDateTime > :start " +
+            "ORDER BY b.startDateTime")
+    List<Booking> findOverlappingInRooms(@Param("roomIds") List<Long> roomIds,
+                                         @Param("start") LocalDateTime start,
+                                         @Param("end") LocalDateTime end,
+                                         @Param("statuses") List<BookingStatus> statuses);
 }

@@ -2,6 +2,7 @@ package com.aradosavljevic.hr_service.api.controller;
 
 import com.aradosavljevic.erp_common.dto.ApiResponse;
 import com.aradosavljevic.hr_service.application.dto.AuthResponse;
+import com.aradosavljevic.hr_service.application.dto.CurrentUserDTO;
 import com.aradosavljevic.hr_service.application.request.auth.ChangePasswordRequest;
 import com.aradosavljevic.hr_service.application.request.auth.LoginRequest;
 import com.aradosavljevic.hr_service.application.request.auth.RegisterRequest;
@@ -26,6 +27,11 @@ public class AuthController {
     @PostMapping("/login")
     public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.success("Prijava uspesna", authenticationService.login(request));
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<CurrentUserDTO> me(Authentication authentication) {
+        return ApiResponse.success(authenticationService.getCurrentUser(authentication.getName()));
     }
 
     @PostMapping("/change-password")
