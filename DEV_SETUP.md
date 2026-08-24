@@ -86,6 +86,22 @@ Na **praznoj** bazi servisi sami upisuju početne podatke, da sistem odmah bude 
 Seeder-i se pokreću samo kad je odgovarajuća tabela prazna, pa ponovno pokretanje ne duplira
 podatke. Demonstracioni podaci se isključuju sa `app.demo-data=false` (tako je u `prod` profilu).
 
+## Testovi
+
+```bash
+./mvnw test          # 44 testa, bez Dockera i baze (H2 u memoriji)
+```
+
+| Test | Šta pokriva |
+|---|---|
+| `BookingRepositoryTest` | preklapanje termina i zauzetost — granični slučajevi (dodirivanje krajeva, obuhvatanje, otkazan termin, više sala) |
+| `TeachingServiceImplTest` | fond časova: norma vs realizovano, prekovremeni, izuzimanje nenastavnih i neodobrenih termina, zabrana uvida u tuđi fond |
+| `AuthControllerTest` | prijava imenom i email-om, pogrešna lozinka, `/auth/me` sa tokenom i bez njega |
+| `WorkerControllerSecurityTest` | autorizacija po rolama nad HTTP slojem: ADMIN sve, HR bez brisanja, PROFESOR samo čitanje |
+
+Sistemski test nad pokrenutim sistemom (85 provera kroz gateway i pravu bazu):
+`node tools/e2e/api-test.mjs` — detalji u [tools/e2e/README.md](tools/e2e/README.md).
+
 ## Konfiguracija (env varijable, dev fallback)
 
 - `SPRING_PROFILES_ACTIVE` (dev/prod), `JWT_SECRET`, `DB_HOST/DB_NAME/DB_USER/DB_PASSWORD`, `KAFKA_SERVERS`
