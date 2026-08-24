@@ -139,5 +139,17 @@ services:
       - hr-service
       - schedule-service
 
+  # React frontend (nginx servira build i proksira /hr i /schedule na gateway)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: erp-frontend
+    profiles: ["app"]
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+
 volumes:
   postgres-data:
