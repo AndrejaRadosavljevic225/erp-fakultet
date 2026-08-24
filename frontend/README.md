@@ -14,12 +14,17 @@ pristupa preko `api-gateway`-a.
 | HTTP | axios (Bearer token interceptor) |
 | Kalendar | FullCalendar v6 (timeGrid / dayGrid) |
 
+## Najbrže — ceo sistem u jednom kliku
+
+Dupli klik na `start.bat` u korenu repozitorijuma (ili `docker compose --profile app up -d --build --wait`).
+Aplikacija je onda na `http://localhost:3000`, zajedno sa celim backendom.
+
 ## Pokretanje u razvoju
 
 1. Pokreni backend (iz korena repozitorijuma):
 
 ```bash
-docker compose --profile app up -d --build
+docker compose --profile app up -d --build --wait
 ```
 
 2. Pokreni frontend:
@@ -31,7 +36,8 @@ npm install && npm run dev
 Aplikacija je na `http://localhost:5173`, a gateway na `http://localhost:8080`
 (podesivo kroz `VITE_API_URL` u `.env`).
 
-Difoltni nalog: **admin / admin123**. Prijava radi i korisničkim imenom i email adresom zaposlenog.
+Nalozi koje seeder upisuje na svežu bazu: **admin / admin123**, **hr / hr1234**,
+**profesor / prof1234**. Prijava radi i korisničkim imenom i email adresom zaposlenog.
 
 ## Skripte
 

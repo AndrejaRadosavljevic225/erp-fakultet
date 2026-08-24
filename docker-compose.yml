@@ -1,7 +1,13 @@
 # ERP Fakultet - Docker stack
 #
-# CEO STACK odjednom (baza + Kafka + HR + Schedule + Gateway):
-#     docker compose --profile app up -d --build
+# NAJLAKSE: dupli klik na start.bat (digne Docker, saceka spremnost, otvori aplikaciju)
+#
+# CEO STACK odjednom (baza + Kafka + HR + Schedule + Gateway + frontend):
+#     docker compose --profile app up -d --build --wait
+# Zahvaljujuci healthcheck-ovima i --wait, komanda se zavrsava tek kad je sistem
+# stvarno spreman za prijavu, a ne cim se kontejneri pokrenu.
+# Aplikacija: http://localhost:3000   (prijava: admin / admin123)
+#
 # Samo baza + Kafka (kad servise pokreces iz IntelliJ-a):
 #     docker compose up -d
 # Sa UI alatima (pgAdmin, kafka-ui):
@@ -95,6 +101,12 @@ services:
       JWT_SECRET: erp-fakultet-hr-service-super-tajni-kljuc-promeni-me-2026
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8081/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -117,6 +129,12 @@ services:
       JWT_SECRET: erp-fakultet-hr-service-super-tajni-kljuc-promeni-me-2026
     ports:
       - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8083/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
     depends_on:
       postgres:
         condition: service_healthy
@@ -135,9 +153,18 @@ services:
       FINANCE_URI: http://finance-service:8082
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    # Ceka da servisi budu ZDRAVI, ne samo pokrenuti — inace prve prijave vracaju 500
     depends_on:
-      - hr-service
-      - schedule-service
+      hr-service:
+        condition: service_healthy
+      schedule-service:
+        condition: service_healthy
 
   # React frontend (nginx servira build i proksira /hr i /schedule na gateway)
   frontend:
@@ -148,8 +175,15 @@ services:
     profiles: ["app"]
     ports:
       - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy
 
 volumes:
   postgres-data:

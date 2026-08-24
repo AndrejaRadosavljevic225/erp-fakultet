@@ -6,13 +6,35 @@
 
 ---
 
-## Opcija A — CEO STACK jednom komandom (preporuka)
+## Opcija A — jedan klik (preporuka)
 
-Podiže bazu + Kafku + sva 3 servisa u kontejnerima:
+Dupli klik na **`start.bat`** u korenu projekta. Skripta pokreće Docker ako ne radi,
+podiže ceo sistem, čeka da svi servisi budu **zdravi** i otvara aplikaciju.
+Zaustavljanje: **`stop.bat`**.
+
+Isto to iz terminala:
 ```bash
-docker compose --profile app up -d --build
+docker compose --profile app up -d --build --wait
 ```
-Prvi put build traje par minuta (gradi slike). Kasnije bez `--build` je brzo.
+Podiže bazu + Kafku + 3 servisa + frontend. Zahvaljujući healthcheck-ovima, `--wait`
+se završava tek kad je sistem stvarno spreman za prijavu (bez toga prve prijave vraćaju 500
+dok se `hr-service` diže). Prvi build traje par minuta; kasnije bez `--build` je brzo.
+
+| Adresa | Šta je |
+|---|---|
+| http://localhost:3000 | **aplikacija (frontend)** |
+| http://localhost:8080 | api-gateway |
+
+**Nalozi na svežoj bazi** (upisuje ih seeder pri prvom pokretanju):
+
+| Korisnik | Lozinka | Rola |
+|---|---|---|
+| `admin` | `admin123` | ADMIN |
+| `hr` | `hr1234` | HR |
+| `profesor` | `prof1234` | PROFESOR |
+
+Prijava radi i email adresom zaposlenog (npr. `petar.petrovic@fakultet.rs`).
+Lozinka administratora se može promeniti preko `ADMIN_PASSWORD`, odn. `app.admin-password`.
 
 Gašenje: `docker compose --profile app down`  •  + brisanje podataka: `... down -v`
 
@@ -51,6 +73,18 @@ Postgres: `localhost:5432` (`erp`/`erp`) • Kafka: `localhost:9092`
 
 **Auth:** `POST /hr/api/auth/login` → `data.token` → šalji `Authorization: Bearer <token>`.
 Difoltni nalog: `admin` / `admin123` (rola ADMIN). Role: ADMIN / HR / PROFESOR.
+
+## Početni podaci (seeder)
+
+Na **praznoj** bazi servisi sami upisuju početne podatke, da sistem odmah bude upotrebljiv:
+
+- `DefaultRoleSeeder` (HR) — role ADMIN/HR/PROFESOR i administratorski nalog
+- `DemoDataSeeder` (HR) — 5 zaposlenih, 4 radna mesta, nalozi `hr` i `profesor`, permisije
+- `DemoDataSeeder` (Schedule) — 4 prostorije, tekuća školska godina, norma od 12 časova,
+  dodele nastavnika i 5 termina u tekućoj nedelji (3 odobrena + 2 koja čekaju odobrenje)
+
+Seeder-i se pokreću samo kad je odgovarajuća tabela prazna, pa ponovno pokretanje ne duplira
+podatke. Demonstracioni podaci se isključuju sa `app.demo-data=false` (tako je u `prod` profilu).
 
 ## Konfiguracija (env varijable, dev fallback)
 
