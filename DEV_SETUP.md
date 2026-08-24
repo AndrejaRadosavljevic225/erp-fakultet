@@ -88,9 +88,15 @@ podatke. Demonstracioni podaci se isključuju sa `app.demo-data=false` (tako je 
 
 ## Testovi
 
+Dupli klik na **`test.bat`** (sam pronalazi JDK 21) ili iz terminala:
+
 ```bash
 ./mvnw test          # 44 testa, bez Dockera i baze (H2 u memoriji)
 ```
+
+> Maven mora da radi na **JDK 21**. Ako je sistemski `java` stariji, `mvn` puca sa
+> `UnsupportedClassVersionError ... class file version 61.0`. Tada postavi `JAVA_HOME`
+> na JDK 21 ili koristi `test.bat`, koji to radi umesto tebe.
 
 | Test | Šta pokriva |
 |---|---|
