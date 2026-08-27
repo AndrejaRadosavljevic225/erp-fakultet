@@ -35,7 +35,7 @@ echo Docker je spreman.
 echo.
 
 rem --- 2. Podizanje servisa; --wait ceka da svi budu ZDRAVI ---
-echo Podizem bazu, Kafku i servise (prvi put traje nekoliko minuta zbog build-a)...
+echo Podizem bazu i servise (prvi put traje nekoliko minuta zbog build-a)...
 docker compose --profile app up -d --build --wait
 if errorlevel 1 goto composefail
 

@@ -16,7 +16,7 @@ Isto to iz terminala:
 ```bash
 docker compose --profile app up -d --build --wait
 ```
-Podiže bazu + Kafku + 3 servisa + frontend. Zahvaljujući healthcheck-ovima, `--wait`
+Podiže bazu, 3 servisa i frontend. Zahvaljujući healthcheck-ovima, `--wait`
 se završava tek kad je sistem stvarno spreman za prijavu (bez toga prve prijave vraćaju 500
 dok se `hr-service` diže). Prvi build traje par minuta; kasnije bez `--build` je brzo.
 
@@ -41,7 +41,7 @@ Gašenje: `docker compose --profile app down`  •  + brisanje podataka: `... do
 ## Opcija B — samo baza u Dockeru, servisi iz IntelliJ-a
 
 ```bash
-docker compose up -d          # samo Postgres + Kafka
+docker compose up -d          # samo Postgres
 ```
 Pa iz IntelliJ-a (ili terminala) pokreni servise:
 ```bash
@@ -51,7 +51,7 @@ mvn -pl schedule-service spring-boot:run
 mvn -pl api-gateway spring-boot:run
 ```
 
-UI alati (pgAdmin :5050, kafka-ui :8090): `docker compose --profile tools up -d`
+UI alat (pgAdmin :5050): `docker compose --profile tools up -d`
 
 ---
 
@@ -64,7 +64,7 @@ UI alati (pgAdmin :5050, kafka-ui :8090): `docker compose --profile tools up -d`
 | schedule-service | 8083 | `erp_schedule` |
 | finance-service | 8082 | `erp_finance` (još nije implementiran) |
 
-Postgres: `localhost:5432` (`erp`/`erp`) • Kafka: `localhost:9092`
+Postgres: `localhost:5432` (`erp`/`erp`)
 
 ## Pristup preko gateway-a (jedan URL)
 
@@ -110,6 +110,6 @@ Sistemski test nad pokrenutim sistemom (85 provera kroz gateway i pravu bazu):
 
 ## Konfiguracija (env varijable, dev fallback)
 
-- `SPRING_PROFILES_ACTIVE` (dev/prod), `JWT_SECRET`, `DB_HOST/DB_NAME/DB_USER/DB_PASSWORD`, `KAFKA_SERVERS`
+- `SPRING_PROFILES_ACTIVE` (dev/prod), `JWT_SECRET`, `DB_HOST/DB_NAME/DB_USER/DB_PASSWORD`
 - Gateway rute: `HR_URI`, `SCHEDULE_URI`, `FINANCE_URI`
 - Profili: `dev` = `ddl-auto=update` + SQL log; `prod` = `ddl-auto=validate`, bez logova.

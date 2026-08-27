@@ -1,68 +1,133 @@
-1. HR je zaduzen za vodjenjem evidencije svim zaposlenima, njihovim rolama, permisijama, pozicijama. Sto se tice nastavnog osoblja bitno je voditi evidenciju o potrebnim casovima u godini, dodatnim aktivnostima. Za svo osoblje naravno treba takodje imati evidenciju o slobodnim danima, odmorima, bolovanju i slicno.
-2. Scheduler je zaduzen da upravlja prostorijama fakulteta, njihovom zauzecu po terminima. Fokus je samo na rezervisanju datog termina od strane zaposlenih a ne sta se konkretno desava u tim prostorijama izuzev dva slucaja: redovnih aktivnosti i dodatnih (dodatni casovi, mentorstvo,...). Takodje treba imati u vidu kojoj skolskoj godini pripadaju.
-3. Finansijski mikroservis pokriva isplate plata, svih odliva, svih prihoda ( fokus na dugovanjima studenata i isplatama tih istih).Plate se racunaju na osnovu zvanja, fonda casova i dodatnih aktivnosti iz HR segmenta.
+# ERP Fakultet
 
-Akteri:
-Admin
-HR
-HR Manager (Maybe)
-Scheduler Manager
-Payrole Manager
-Student service Manager
-Worker (Nastavno i nenastavno osoblje)
+Informacioni sistem za upravljanje kadrovima i prostorijama fakulteta, rađen kao praktični deo
+master rada. Sastoji se od Spring Boot mikroservisa iza API gateway-a i React web aplikacije,
+a ceo sistem se podiže jednom komandom u Docker-u.
 
+## Pokretanje
 
-HR
-	-Pregled svih zaposlenih
-		--pretrga/filteri
-		--Detalji zaposlenog
-			---Izmena zaposlenog
-			---Brisanje zaposlenog
-			---Pregled trenutne skolske godine u slucaju da je nastavno osoblej (njegov fond casova, dodatne broj dodatnih aktivnosti i mentorstva)
-		--Kreiranje zaposlenog
-	-Pregled svih user profila (njihovih permisija)
-		--pretrga/filteri
-		--Detalji usera
-			---Izmena usera
-			---Brisanje usera
-		--Kreiranje usera
-Schedule
-	-Pregled svih termina (Rezervisanih i slobodnih sa filterima) (Trenutna godina)
-		--Podnosenje rezervacije (Automacki prihvacen ako je scheduler menager ili neko sa visom pozicijom)
-			---Unosenje detalja (ponavljajuci, redovni/dodatni/mentorstvo)
-		--pregled svih termina za neku prostoriju 
-			---Podnosenje rezervacije
-		--pregled svih termina za neku osobu
-			---Podnosenje rezervacije
-		--Detaljan prikaz odredjenog rezervisanog termina
-			---Izmena rezervacije
-			---otkazivanje		
-	-Pregled Svih rezervacija (Trenutna godina)
-		--pregled svih rezervacija za neku prostoriju 
-			---Prihvatanje rezervacije
-			---Odbijanje rezervacije	
-		--pregled svih rezervacija za neku osobu
-			---Prihvatanje rezervacije
-			---Odbijanje rezervacije	
- 	-Pregled svih prostorija
-		--Dodavalje prostorije
-		--Detaljan prikaz prostorija
-			---Brisanje prostorije
-			---Izmena prostorije
-	-Pregled skolskih godina
-		--pretraga/filtriranje
-		--Detaljan prikaz godine
-Finance
-	-Pregled svih prihoda
-		-Pretraga/filteri
-		-pregled svih uplata studenata
-	-Pregled dugovanja svih studenata
-		--Detaljan pregled dugovanja studenta
-			---pregled svih uplata studenata
-	-Pregled svih odliva
-		--Pretraga/filteri
-		--Detaljan prikaz odliva
-		--Pregled svih plata
-			---Detaljan pregled plate
-	-Isplata Svih plata
-		-Isplata jedne plate
+Dupli klik na **`start.bat`** — skripta pokreće Docker ako ne radi, podiže sve servise, čeka da
+budu spremni i otvara aplikaciju. Zaustavljanje: **`stop.bat`**.
+
+Isto iz terminala:
+
+```bash
+docker compose --profile app up -d --build --wait
+```
+
+Aplikacija je na **http://localhost:3000**. Prvo pokretanje traje nekoliko minuta jer se grade
+slike; kasnije je ispod pola minuta.
+
+Na praznoj bazi se sami upisuju početni podaci, pa je sistem odmah upotrebljiv:
+
+| Korisnik | Lozinka | Rola |
+|---|---|---|
+| `admin` | `admin123` | ADMIN |
+| `hr` | `hr1234` | HR |
+| `profesor` | `prof1234` | PROFESOR |
+
+Prijava radi i email adresom zaposlenog (npr. `petar.petrovic@fakultet.rs`).
+
+Detaljno uputstvo, uključujući rad iz IntelliJ-a: [DEV_SETUP.md](DEV_SETUP.md).
+
+## Šta sistem radi
+
+**Kadrovi (HR)** — evidencija zaposlenih sa pretragom, profil sa istorijom izmena, promena
+statusa (odsustvo, suspenzija, prestanak radnog odnosa), radna mesta i dodela zaposlenih na njih,
+korisnički nalozi, role i permisije, audit log svih izmena.
+
+**Raspored** — prostorije, rezervacije sa **proverom preklapanja pre slanja**, odobravanje i
+odbijanje zahteva, otkazivanje, i kalendar zauzetosti sa filterima po sali, zgradi i kapacitetu.
+
+**Fond časova** — norma časova po zvanju za školsku godinu, dodela nastavnika, i izveštaj koji
+poredi normu sa realizovanim satima iz održanih nastavnih termina (odstupanje, prekovremeni sati).
+
+Pristup je ograničen rolom, i to na serveru: ADMIN ima sve, HR sve osim brisanja i upravljanja
+rolama, PROFESOR čita zajedničke podatke i barata samo svojim rezervacijama i svojim fondom časova.
+
+## Arhitektura
+
+```
+                    ┌──────────────┐
+   pregledač  ───►  │   frontend   │  React + TypeScript, nginx
+                    │   :3000      │  (servira build, proksira /hr i /schedule)
+                    └──────┬───────┘
+                           ▼
+                    ┌──────────────┐
+                    │ api-gateway  │  jedan ulaz, prosleđuje JWT
+                    │   :8080      │
+                    └──┬────────┬──┘
+              /hr/**   │        │   /schedule/**
+                       ▼        ▼
+        ┌────────────────┐   ┌──────────────────┐
+        │  hr-service    │   │ schedule-service │
+        │  :8081         │   │ :8083            │
+        └────────┬───────┘   └────────┬─────────┘
+                 ▼                    ▼
+            ┌─────────┐          ┌──────────────┐
+            │ erp_hr  │          │ erp_schedule │   PostgreSQL
+            └─────────┘          └──────────────┘
+```
+
+Svaki servis ima sopstvenu bazu. Prijava se obavlja u `hr-service`-u, koji izdaje JWT; oba
+servisa ga validiraju istim tajnim ključem, pa `schedule-service` nema sopstvenu bazu korisnika.
+
+| Modul | Uloga |
+|---|---|
+| `frontend` | React 19 + TypeScript + Mantine, TanStack Query, FullCalendar |
+| `api-gateway` | Spring Cloud Gateway — rutiranje i CORS |
+| `hr-service` | zaposleni, radna mesta, nalozi, role, permisije, audit log, prijava |
+| `schedule-service` | prostorije, rezervacije, školske godine, norme, fond časova |
+| `erp-common` | zajednički DTO-ovi, obrada grešaka, pomoćne klase |
+| `finance-service` | **nije implementiran** — projektovan, van opsega ovog rada |
+
+**Stack:** Java 21, Spring Boot 4, Spring Security (JWT), Spring Data JPA, PostgreSQL 16,
+Maven (multi-modul), Docker Compose; React 19, TypeScript, Vite, Mantine.
+
+## Testovi
+
+```bash
+./mvnw test     # ili dupli klik na test.bat, koji sam pronađe JDK 21
+```
+
+44 testa, bez Docker-a i baze (H2 u memoriji). Pokrivena su poslovna pravila koja nose sistem:
+preklapanje termina sa graničnim slučajevima, računica fonda časova, prijava korisničkim imenom
+i email-om, i autorizacija po rolama nad HTTP slojem.
+
+Sistemski test nad pokrenutim sistemom (85 provera kroz gateway i pravu bazu):
+
+```bash
+node tools/e2e/api-test.mjs
+```
+
+## Obim rada i ograničenja
+
+Rad pokriva **kadrovsku evidenciju i upravljanje prostorijama**; finansijski modul je projektovan
+(model podataka, use-case-ovi, ruta na gateway-u) ali nije implementiran i predstavlja dalji rad.
+Iz istog razloga u sistemu nema asinhrone komunikacije — jedini tokovi koji bi je opravdali
+(knjiženje transakcija i obračun plata) pripadaju finansijskom modulu.
+
+Sistem je namenjen radu u lokalnom, kontejnerizovanom okruženju. Za produkciju bi bilo potrebno:
+migracije šeme umesto `ddl-auto`, upravljanje tajnama izvan repozitorijuma, HTTPS i orkestrator
+umesto Docker Compose-a.
+
+## Struktura repozitorijuma
+
+```
+erp-fakultet/
+├── start.bat / stop.bat / test.bat   pokretanje, zaustavljanje, testovi
+├── docker-compose.yml                ceo sistem (profil "app")
+├── api-gateway/                      ulazna tačka, rutiranje
+├── hr-service/                       kadrovi, nalozi, RBAC
+├── schedule-service/                 prostorije, rezervacije, fond časova
+├── finance-service/                  nije implementiran
+├── erp-common/                       zajedničke klase
+├── frontend/                         React aplikacija
+├── tools/e2e/                        sistemski test API-ja
+├── docker/postgres/                  inicijalizacija baza
+└── DEV_SETUP.md                      detaljno uputstvo za pokretanje
+```
+
+## Licenca
+
+Apache License 2.0 — vidi [LICENSE](LICENSE).
