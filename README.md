@@ -28,7 +28,24 @@ Na praznoj bazi se sami upisuju početni podaci, pa je sistem odmah upotrebljiv:
 
 Prijava radi i email adresom zaposlenog (npr. `petar.petrovic@fakultet.rs`).
 
+Na Linux-u i macOS-u koristi se ista `docker compose` komanda.
+
 Detaljno uputstvo, uključujući rad iz IntelliJ-a: [DEV_SETUP.md](DEV_SETUP.md).
+
+### Nezavisnost od baze
+
+Aplikacija ne zavisi od konkretnog mehanizma baze — menja se samo JDBC adresa (`DB_URL`), dok
+kod, entiteti i upiti ostaju netaknuti. U projektu nema nijednog nativnog SQL upita: sve je JPQL,
+a šemu generiše Hibernate prema dijalektu baze.
+
+```bash
+docker compose --profile app up -d --build --wait                        # PostgreSQL
+docker compose -f docker-compose.mysql.yml --profile app up -d --build --wait   # MySQL
+```
+
+Isti sistem je proveren nad **PostgreSQL-om** i **MySQL-om** (u oba slučaja 85/85 provera
+sistemskog testa), kao i nad **H2 bazom u memoriji**, gde radi bez ijedne spoljne baze.
+Za proizvoljnu bazu dovoljno je proslediti `DB_URL`, `DB_USER` i `DB_PASSWORD`.
 
 ## Šta sistem radi
 
@@ -65,7 +82,7 @@ rolama, PROFESOR čita zajedničke podatke i barata samo svojim rezervacijama i 
         └────────┬───────┘   └────────┬─────────┘
                  ▼                    ▼
             ┌─────────┐          ┌──────────────┐
-            │ erp_hr  │          │ erp_schedule │   PostgreSQL
+            │ erp_hr  │          │ erp_schedule │   PostgreSQL / MySQL / H2
             └─────────┘          └──────────────┘
 ```
 
@@ -81,7 +98,7 @@ servisa ga validiraju istim tajnim ključem, pa `schedule-service` nema sopstven
 | `erp-common` | zajednički DTO-ovi, obrada grešaka, pomoćne klase |
 | `finance-service` | **nije implementiran** — projektovan, van opsega ovog rada |
 
-**Stack:** Java 21, Spring Boot 4, Spring Security (JWT), Spring Data JPA, PostgreSQL 16,
+**Stack:** Java 21, Spring Boot 4, Spring Security (JWT), Spring Data JPA, PostgreSQL 16 (i MySQL, H2),
 Maven (multi-modul), Docker Compose; React 19, TypeScript, Vite, Mantine.
 
 ## Testovi
@@ -115,8 +132,9 @@ umesto Docker Compose-a.
 
 ```
 erp-fakultet/
-├── start.bat / stop.bat / test.bat   pokretanje, zaustavljanje, testovi
-├── docker-compose.yml                ceo sistem (profil "app")
+├── start.bat / stop.bat / test.bat   pokretanje, zaustavljanje, testovi (Windows)
+├── docker-compose.yml                ceo sistem nad PostgreSQL-om (profil "app")
+├── docker-compose.mysql.yml          ista aplikacija nad MySQL-om
 ├── api-gateway/                      ulazna tačka, rutiranje
 ├── hr-service/                       kadrovi, nalozi, RBAC
 ├── schedule-service/                 prostorije, rezervacije, fond časova
@@ -124,7 +142,7 @@ erp-fakultet/
 ├── erp-common/                       zajedničke klase
 ├── frontend/                         React aplikacija
 ├── tools/e2e/                        sistemski test API-ja
-├── docker/postgres/                  inicijalizacija baza
+├── docker/postgres/ i docker/mysql/  inicijalizacija baza
 └── DEV_SETUP.md                      detaljno uputstvo za pokretanje
 ```
 

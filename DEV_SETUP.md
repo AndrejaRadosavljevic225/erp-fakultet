@@ -38,6 +38,31 @@ Lozinka administratora se može promeniti preko `ADMIN_PASSWORD`, odn. `app.admi
 
 Gašenje: `docker compose --profile app down`  •  + brisanje podataka: `... down -v`
 
+Na Linux-u i macOS-u koristi se ista `docker compose` komanda.
+
+## Nezavisnost od baze
+
+Sistem nije vezan za jedan mehanizam baze. Menja se **samo JDBC adresa** kroz promenljivu
+`DB_URL` — drajver i dijalekt Spring i Hibernate zaključuju iz same adrese. U kodu nema nijednog
+nativnog SQL upita (sve je JPQL), a šemu generiše Hibernate prema dijalektu.
+
+| Baza | Kako se pokreće | Provereno |
+|---|---|---|
+| PostgreSQL (podrazumevano) | `docker compose --profile app up -d --build --wait` | 85/85 e2e provera |
+| MySQL 8.4 | `docker compose -f docker-compose.mysql.yml --profile app up -d --build --wait` | 85/85 e2e provera |
+| H2 (u memoriji, bez ijedne spoljne baze) | `DB_URL=jdbc:h2:mem:erp_hr` uz pokretanje servisa | prijava i podaci rade |
+
+Za bilo koju drugu bazu ili spoljni server dovoljno je proslediti:
+
+```bash
+DB_URL=jdbc:mysql://neki-server:3306/erp_hr
+DB_USER=korisnik
+DB_PASSWORD=lozinka
+```
+
+Drajveri za PostgreSQL, MySQL/MariaDB i H2 su već na classpath-u; za drugi mehanizam se doda
+odgovarajući JDBC drajver u `pom.xml` servisa.
+
 ## Opcija B — samo baza u Dockeru, servisi iz IntelliJ-a
 
 ```bash
@@ -110,6 +135,7 @@ Sistemski test nad pokrenutim sistemom (85 provera kroz gateway i pravu bazu):
 
 ## Konfiguracija (env varijable, dev fallback)
 
-- `SPRING_PROFILES_ACTIVE` (dev/prod), `JWT_SECRET`, `DB_HOST/DB_NAME/DB_USER/DB_PASSWORD`
+- `SPRING_PROFILES_ACTIVE` (dev/prod), `JWT_SECRET`, `DB_URL` (cela JDBC adresa) ili
+  `DB_HOST/DB_PORT/DB_NAME`, plus `DB_USER/DB_PASSWORD`
 - Gateway rute: `HR_URI`, `SCHEDULE_URI`, `FINANCE_URI`
 - Profili: `dev` = `ddl-auto=update` + SQL log; `prod` = `ddl-auto=validate`, bez logova.

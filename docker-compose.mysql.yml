@@ -1,0 +1,128 @@
+# ERP Fakultet — ista aplikacija, druga baza (MySQL umesto PostgreSQL-a)
+#
+# Dokaz da sistem nije vezan za jedan mehanizam baze: menja se samo JDBC adresa
+# (DB_URL), dok kod, entiteti i upiti ostaju netaknuti — nema nijednog nativnog
+# SQL upita, sve je JPQL, a semu Hibernate generise po dijalektu baze.
+#
+# Pokretanje:
+#     docker compose -f docker-compose.mysql.yml --profile app up -d --build --wait
+# Aplikacija: http://localhost:3000   (prijava: admin / admin123)
+# Gasenje:    docker compose -f docker-compose.mysql.yml --profile app down
+#
+# Koristi zaseban naziv projekta i svoje volumene, pa ne dira Postgres postavku.
+name: erp-fakultet-mysql
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: erp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: erp
+      MYSQL_PASSWORD: erp
+      MYSQL_DATABASE: erp_hr
+    ports:
+      # 3307 spolja, da se ne sudara sa lokalno instaliranim MySQL-om;
+      # servisi unutar mreze koriste mysql:3306
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uerp -perp || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  hr-service:
+    build:
+      context: .
+      dockerfile: hr-service/Dockerfile
+    container_name: erp-hr-service-mysql
+    profiles: ["app"]
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://mysql:3306/erp_hr
+      DB_USER: erp
+      DB_PASSWORD: erp
+      JWT_SECRET: erp-fakultet-hr-service-super-tajni-kljuc-promeni-me-2026
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8081/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  schedule-service:
+    build:
+      context: .
+      dockerfile: schedule-service/Dockerfile
+    container_name: erp-schedule-service-mysql
+    profiles: ["app"]
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://mysql:3306/erp_schedule
+      DB_USER: erp
+      DB_PASSWORD: erp
+      JWT_SECRET: erp-fakultet-hr-service-super-tajni-kljuc-promeni-me-2026
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8083/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: erp-api-gateway-mysql
+    profiles: ["app"]
+    environment:
+      HR_URI: http://hr-service:8081
+      SCHEDULE_URI: http://schedule-service:8083
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    depends_on:
+      hr-service:
+        condition: service_healthy
+      schedule-service:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: erp-frontend-mysql
+    profiles: ["app"]
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
