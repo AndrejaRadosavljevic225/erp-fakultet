@@ -103,6 +103,9 @@ Maven (multi-modul), Docker Compose; React 19, TypeScript, Vite, Mantine.
 
 ## Testovi
 
+Svaki push pokrece [GitHub Actions](.github/workflows/build.yml) koji izvrsava testove backenda
+i proveru tipova, lint i build frontenda.
+
 ```bash
 ./mvnw test     # ili dupli klik na test.bat, koji sam pronađe JDK 21
 ```
@@ -147,6 +150,7 @@ erp-fakultet/
 ├── frontend/                         React aplikacija
 ├── tools/e2e/                        sistemski test API-ja
 ├── tools/perf/                       testovi performansi (k6)
+├── .github/workflows/                build i testovi na svaki push
 ├── docker/postgres/ i docker/mysql/  inicijalizacija baza
 └── DEV_SETUP.md                      detaljno uputstvo za pokretanje
 ```

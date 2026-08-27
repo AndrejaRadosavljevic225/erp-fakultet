@@ -1,0 +1,57 @@
+name: Build i testovi
+
+# Pokrece se na svaki push i pull request nad glavnom granom.
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  backend:
+    name: Backend (Java 21)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Priprema JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Testovi rade nad H2 bazom u memoriji, pa nije potreban ni Docker ni Postgres.
+      - name: Testovi
+        run: ./mvnw -B test
+
+      - name: Build (bez ponovnog pokretanja testova)
+        run: ./mvnw -B -DskipTests package
+
+  frontend:
+    name: Frontend (Node 22)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Priprema Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalacija zavisnosti
+        run: npm ci
+
+      - name: Provera tipova i lint
+        run: |
+          npx tsc -b
+          npm run lint
+
+      - name: Build
+        run: npm run build

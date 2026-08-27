@@ -18,7 +18,6 @@
 	<description>School ERP system</description>
 
 	<modules>
-		<module>API</module>
 		<module>erp-common</module>
 		<module>hr-service</module>
 		<module>finance-service</module>
