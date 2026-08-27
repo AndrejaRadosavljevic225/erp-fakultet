@@ -133,6 +133,10 @@ Dupli klik na **`test.bat`** (sam pronalazi JDK 21) ili iz terminala:
 Sistemski test nad pokrenutim sistemom (85 provera kroz gateway i pravu bazu):
 `node tools/e2e/api-test.mjs` — detalji u [tools/e2e/README.md](tools/e2e/README.md).
 
+**Testovi performansi** (k6, nad pokrenutim sistemom): scenariji opterecenja citanjem i upisom
+i test izdrzljivosti do 100 istovremenih korisnika, sa pragovima kao kriterijumom prolaza —
+detalji i izmereni rezultati u [tools/perf/README.md](tools/perf/README.md).
+
 ## Konfiguracija (env varijable, dev fallback)
 
 - `SPRING_PROFILES_ACTIVE` (dev/prod), `JWT_SECRET`, `DB_URL` (cela JDBC adresa) ili

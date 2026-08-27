@@ -117,6 +117,10 @@ Sistemski test nad pokrenutim sistemom (85 provera kroz gateway i pravu bazu):
 node tools/e2e/api-test.mjs
 ```
 
+Testovi performansi (k6): opterecenje citanjem i upisom, i izdrzljivost do 100 istovremenih
+korisnika, sa pragovima kao kriterijumom prolaza. Izmereni rezultati i uputstvo:
+[tools/perf/README.md](tools/perf/README.md).
+
 ## Obim rada i ograničenja
 
 Rad pokriva **kadrovsku evidenciju i upravljanje prostorijama**; finansijski modul je projektovan
@@ -142,6 +146,7 @@ erp-fakultet/
 ├── erp-common/                       zajedničke klase
 ├── frontend/                         React aplikacija
 ├── tools/e2e/                        sistemski test API-ja
+├── tools/perf/                       testovi performansi (k6)
 ├── docker/postgres/ i docker/mysql/  inicijalizacija baza
 └── DEV_SETUP.md                      detaljno uputstvo za pokretanje
 ```
